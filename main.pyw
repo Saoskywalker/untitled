@@ -1,16 +1,17 @@
-import sys
+import sys, random, threading, time
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtCore import QUrl
 from PyQt5.QtWidgets import (QWidget, QPushButton, QMainWindow,
     QHBoxLayout, QVBoxLayout, QApplication)
-#from PyQt5.QtWebKitWidgets import QWebView
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from qt_gui import Ui_MainWindow
 
 #Windows下独立线程, linux不用
 import ctypes
 ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID("myappid")
 
-class MainWindows(QMainWindow, Ui_MainWindow):
+data = []
+class MainWindows(QMainWindow, QWidget, Ui_MainWindow):
     def __init__(self):
         super(MainWindows, self).__init__()
         '''
@@ -40,6 +41,7 @@ class MainWindows(QMainWindow, Ui_MainWindow):
         self.TextValue = 0  #初始化变量
         self.pushButton.clicked.connect(self.upValue)   #链接槽函数
         self.pushButton_2.clicked.connect(self.dowmValue)
+        self.Connect.clicked.connect(self.textUpdata)
 
         self.pushButton.setStyleSheet(
             '''
@@ -110,6 +112,10 @@ class MainWindows(QMainWindow, Ui_MainWindow):
         #滑条链接进度条
         self.horizontalSlider.valueChanged.connect(self.progressBar.setValue)
 
+        #创建WEB报表
+        # self.webview = QWebEngineView()
+        # self.webview.load(QUrl("file:///D:/Aysi/Python/qt5/render.html"))
+
     # 鼠标点击事件
     def mousePressEvent(self, event):
         #super(MainWindows, self).mousePressEvent(event)
@@ -121,6 +127,7 @@ class MainWindows(QMainWindow, Ui_MainWindow):
 
         if self.label.hideFlag==False:
             if (pos.x() >= 160 and pos.x() <= 260) and (pos.y() >= 100 and pos.y() <= 150):
+                write_excel()
                 self.close()
             elif (pos.x() >= 20 and pos.x() <= 120) and (pos.y() >= 100 and pos.y() <= 150):
                 self.showMinimized()
@@ -157,8 +164,47 @@ class MainWindows(QMainWindow, Ui_MainWindow):
         self.TextValue = self.TextValue-1
         self.label_5.setText(str(self.TextValue))
 
+    def textUpdata(self):
+        # y = ''
+        # for x in data:
+        #     y = y+x+'\n'
+        # self.textBrowser.setText(y)
+        #for g in range(10):
+        if(len(data)==0):
+            self.textBrowser.setText("NOT THING") 
+            return
+        i = random.choice(data)
+        j = data.index(i)
+        del data[j] 
+        self.textBrowser.setText(i)       
+
+#excel operate
+from openpyxl import Workbook
+from openpyxl import load_workbook
+
+#READ EXCEL
+def read_excel():
+    # 创建文件对象
+    workbook = load_workbook(r'C:\Users\Aysi\PycharmProjects\untitled\ddd.xlsx')
+    ws =  workbook.active #get frist sheet
+    ws1 = workbook.get_sheet_by_name("ui")
+    cols = []
+    for col in ws1.iter_cols():
+        cols.append(col)
+ 
+    # print cols   #所有列
+    print(cols[0])   #获取第一列
+    # print cols[0][0]   #获取第一列的第一行的单元格对象
+    # print cols[0][0].value   #获取第一列的第一行的值
+ 
+    return cols[0]
+
+def write_excel():
+    pass
+
 if __name__ == "__main__":
     app = QApplication(sys.argv)
     widget = MainWindows()
     widget.show()
+    data = list(read_excel())
     sys.exit(app.exec())
